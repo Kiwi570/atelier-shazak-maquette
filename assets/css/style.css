@@ -30,9 +30,9 @@
   color-scheme: light;
 }
 
-@font-face { font-family: "Cormorant Garamond"; src: url("../fonts/cormorant-garamond.woff") format("woff"); font-weight: 300 700; font-style: normal; font-display: swap; }
-@font-face { font-family: "Cormorant Garamond"; src: url("../fonts/cormorant-garamond-italic.woff") format("woff"); font-weight: 300 700; font-style: italic; font-display: swap; }
-@font-face { font-family: "Inter Tight"; src: url("../fonts/inter-tight.woff") format("woff"); font-weight: 100 900; font-style: normal; font-display: swap; }
+@font-face { font-family: "Cormorant Garamond"; src: url("../fonts/cormorant-garamond.woff2") format("woff2"); font-weight: 300 700; font-style: normal; font-display: swap; }
+@font-face { font-family: "Cormorant Garamond"; src: url("../fonts/cormorant-garamond-italic.woff2") format("woff2"); font-weight: 300 700; font-style: italic; font-display: swap; }
+@font-face { font-family: "Inter Tight"; src: url("../fonts/inter-tight.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; }
 
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
@@ -90,7 +90,7 @@ p { margin: 0; max-width: 64ch; }
 .btn--clair { --fond: transparent; --texte: var(--encre); border-color: var(--lin-fonce); }
 .btn--clair:hover { --fond: var(--encre); --texte: var(--ivoire); border-color: var(--encre); }
 .btn--sur-sombre { --fond: var(--ivoire); --texte: var(--encre); }
-.btn--sur-sombre:hover { --fond: var(--cognac-vif); --texte: var(--ivoire); border-color: var(--cognac-vif); }
+.btn--sur-sombre:hover { --fond: var(--cognac); --texte: var(--ivoire); border-color: var(--cognac); }
 .btn__point { width: .5em; height: .5em; transform: rotate(45deg); background: currentColor; flex: none; }
 .lien-cousu { position: relative; text-decoration: none; padding-bottom: .2em; background-image: repeating-linear-gradient(90deg, currentColor 0 6px, transparent 6px 10px); background-size: 0% 1px; background-repeat: no-repeat; background-position: 0 100%; transition: background-size .6s var(--ease); }
 .lien-cousu:hover, .lien-cousu:focus-visible { background-size: 100% 1px; }
@@ -241,8 +241,8 @@ html.sans-ouverture .ouverture { display: none; }
 /* ---------- Salles (savoir-faire horizontaux) ---------- */
 .salles { position: relative; background: var(--teinte); transition: background-color .8s var(--ease); overflow: clip; }
 .salles__intro { padding-top: clamp(72px, 10vw, 140px); }
-.salles__piste { display: flex; width: max-content; }
-.salle { width: 100vw; flex: none; padding: clamp(28px, 4vw, 56px) 0 clamp(56px, 6vw, 96px); }
+.salles__piste { display: flex; flex-direction: column; width: 100%; }
+.salle { width: 100%; flex: none; padding: clamp(28px, 4vw, 56px) 0 clamp(56px, 6vw, 96px); }
 .salle__grille { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: clamp(12px, 2vw, 28px); row-gap: 24px; align-items: end; height: 100%; }
 .salle__texte { grid-column: 1 / span 4; display: grid; gap: 18px; align-self: center; }
 .salle__nom { font-size: clamp(3rem, 2rem + 5vw, 7.5rem); font-weight: 300; line-height: .92; }
@@ -253,6 +253,8 @@ html.sans-ouverture .ouverture { display: none; }
 .salle__c { grid-column: 10 / span 3; }
 .salle__c .piece__cadre { aspect-ratio: 3 / 4; }
 .salle__compteur { font-family: var(--f-display); font-size: var(--t-l); color: var(--cognac); }
+.salles.est-horizontal .salles__piste { flex-direction: row; width: max-content; }
+.salles.est-horizontal .salle { width: 100vw; }
 .salles.est-horizontal .salle { height: 100svh; display: flex; align-items: center; padding-top: calc(env(safe-area-inset-top, 0px) + 96px); }
 .salles.est-horizontal .salle__grille { height: auto; width: 100%; }
 .salles.est-horizontal .salle__a .piece__cadre { aspect-ratio: auto; height: min(58vh, 620px); }
@@ -277,8 +279,9 @@ html.sans-ouverture .ouverture { display: none; }
 .etape h3 { font-size: clamp(1.45rem, 1.1rem + 1.1vw, 2.05rem); margin: 2px 0 6px; }
 .etape p { font-size: var(--t-s); }
 .etape p { color: var(--encre-douce); max-width: 42ch; }
-.methode.est-epingle .etape { opacity: .32; }
-.methode.est-epingle .etape.est-active { opacity: 1; }
+/* étapes inactives : le texte reste lisible, seuls le numéro et le titre s’effacent */
+.methode.est-epingle .etape:not(.est-active) :is(.etape__num, h3) { opacity: .7; transition: opacity .5s var(--ease); }
+
 .methode__visuels { grid-column: 7 / span 6; position: relative; }
 .methode__pile { position: relative; aspect-ratio: 4 / 5; max-height: calc(100svh - 190px); width: 100%; overflow: hidden; background: var(--ivoire-ombre); }
 .methode__pile .piece { position: absolute; inset: 0; }
@@ -622,3 +625,39 @@ html.calme .medias__piste [aria-hidden="true"] { display: none; }
 .projet__fiche { align-self: start; }
 .visionneuse .mention { color: color-mix(in srgb, var(--ivoire) 70%, var(--encre)); }
 .atelier-tresse__texte .piece { max-width: 300px; }
+
+/* ---------- Finitions (audit) ---------- */
+/* menu mobile : la page ne défile plus derrière, même sans Lenis ; le menu défile en paysage */
+html.menu-ouvert { overflow: hidden; }
+.menu-mobile { overflow-y: auto; overscroll-behavior: contain; }
+@media (max-height: 520px) { .menu-mobile { padding-top: calc(env(safe-area-inset-top, 0px) + 72px); gap: 16px; } .menu-mobile nav a { font-size: 2rem; } }
+/* modales : défilement contenu, pointeur natif au-dessus de la couche supérieure */
+.legal, .visionneuse { overscroll-behavior: contain; }
+html.avec-curseur:has(dialog[open]), html.avec-curseur:has(dialog[open]) * { cursor: auto; }
+html.avec-curseur:has(dialog[open]) :is(a, button) { cursor: pointer; }
+html:has(dialog[open]) :is(.curseur, .loupe) { display: none; }
+/* ouverture : jamais en mode calme ni avec « réduire les animations » */
+html.calme .ouverture { display: none; }
+@media (prefers-reduced-motion: reduce) { .ouverture { display: none; } }
+/* bandeau des médias : pause aussi au focus clavier */
+.medias:focus-within .medias__piste { animation-play-state: paused; }
+/* bordures des champs et puces lisibles (≥ 3:1) */
+.champ input, .champ textarea, .champ select, .puce span, .copier, .bouton-son { border-color: #8C7F6A; }
+/* coordonnées devenues liens : même dessin */
+a.coord__valeur, a.selectionnable { color: inherit; text-decoration: none; }
+/* cibles tactiles : 44 px */
+.copier, .bouton-son, .fermer { min-height: 44px; }
+.bouton-menu { min-width: 44px; min-height: 44px; }
+.bascule { min-height: 44px; }
+@media (pointer: coarse) { .pied a, .pied button, .sommaire a { display: inline-flex; align-items: center; min-height: 44px; } }
+/* page introuvable */
+.page-404 { min-height: 70svh; display: grid; align-content: center; gap: 22px; padding-block: 150px 90px; }
+.page-404 h1 { font-size: clamp(2.6rem, 6vw, 5rem); font-weight: 300; line-height: 1; text-wrap: balance; }
+.page-404 .actions { display: flex; flex-wrap: wrap; gap: 12px; }
+/* pied (fond encre) : texte et mention de la lettre lisibles (1,8:1 auparavant) */
+.pied .texte, .pied .mention { color: color-mix(in srgb, var(--ivoire) 74%, var(--encre)); }
+#lettre-email:focus-visible { outline: 2px solid var(--cognac-vif); outline-offset: 2px; }
+/* aucun défilement horizontal (décor du héros agrandi, en-tête à 320 px, adresse longue du pied) */
+main { overflow-x: clip; }
+@media (max-width: 380px) { .bouton-menu { margin-right: 0; } .entete__barre { gap: 6px; } .marque { gap: 8px; } .entete__actions { gap: 4px; } .bouton-son { padding: .5em .6em; } }
+.pied a.selectionnable { overflow-wrap: anywhere; }

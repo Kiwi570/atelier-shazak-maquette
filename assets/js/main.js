@@ -250,15 +250,26 @@
   });
   lancer('menu', function () {
     var bouton = $('.bouton-menu'), menu = $('#menu-mobile'); if (!bouton || !menu) return;
-    function fermer() { menu.hidden = true; bouton.setAttribute('aria-expanded', 'false'); bouton.setAttribute('aria-label', 'Ouvrir le menu'); if (lenis) lenis.start(); }
+    menu.setAttribute('data-lenis-prevent', '');
+    function horsMenu(on) { $$('body > main, body > footer, body > .evitement').forEach(function (el) { el.inert = on; }); racine.classList.toggle('menu-ouvert', on); }
+    function fermer() { menu.hidden = true; bouton.setAttribute('aria-expanded', 'false'); bouton.setAttribute('aria-label', 'Ouvrir le menu'); horsMenu(false); if (lenis) lenis.start(); }
     bouton.addEventListener('click', function () {
       var ouvrir = menu.hidden; menu.hidden = !ouvrir;
       bouton.setAttribute('aria-expanded', ouvrir ? 'true' : 'false'); bouton.setAttribute('aria-label', ouvrir ? 'Fermer le menu' : 'Ouvrir le menu');
-      if (ouvrir) { if (lenis) lenis.stop(); if (avecGsap && !calme) G.from($$('a', menu), { yPercent: 40, opacity: 0, stagger: 0.05, duration: 0.6, ease: 'power3.out' }); }
+      horsMenu(ouvrir);
+      if (ouvrir) { if (lenis) lenis.stop(); var l = $('a', menu); if (l) l.focus(); if (avecGsap && !calme) G.fromTo($$('a', menu), { yPercent: 40, opacity: 0 }, { yPercent: 0, opacity: 1, overwrite: true, stagger: 0.05, duration: 0.6, ease: 'power3.out' }); }
       else if (lenis) lenis.start();
     });
     menu.addEventListener('click', function (e) { if (e.target.closest('a')) fermer(); });
-    d.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !menu.hidden) { fermer(); bouton.focus(); } });
+    d.addEventListener('keydown', function (e) {
+      if (menu.hidden) return;
+      if (e.key === 'Escape') { fermer(); bouton.focus(); return; }
+      if (e.key !== 'Tab') return;
+      var items = [bouton].concat($$('a[href], button:not([disabled])', menu)), i = items.indexOf(d.activeElement);
+      if (e.shiftKey && i <= 0) { e.preventDefault(); items[items.length - 1].focus(); }
+      else if (!e.shiftKey && i === items.length - 1) { e.preventDefault(); items[0].focus(); }
+    });
+    window.addEventListener('pageshow', function (ev) { if (ev.persisted && !menu.hidden) fermer(); });
   });
 
   function nomFichier(chemin) { var f = chemin.split('/').pop() || 'index.html'; return f === '' ? 'index.html' : f; }
@@ -281,12 +292,18 @@
       var parts = href.split('#'), fichier = parts[0] ? nomFichier(parts[0]) : ici, ancre = parts[1];
       if (fichier === ici) {
         if (ancre) { e.preventDefault(); if (ancre === 'projet') prefillProjet(); allerA(ancre); var cible = d.getElementById(ancre); if (cible) { cible.setAttribute('tabindex', '-1'); setTimeout(function () { cible.focus({ preventScroll: true }); }, 900); } }
+        else { e.preventDefault(); if (lenis) lenis.scrollTo(0); else window.scrollTo({ top: 0, behavior: calme ? 'auto' : 'smooth' }); }
         return;
       }
       e.preventDefault();
       couvrir(function () { location.href = href; });
     });
-    window.addEventListener('pageshow', function (ev) { if (ev.persisted) { var o = $('.ouverture'); if (o) o.classList.add('est-finie'); } });
+    window.addEventListener('pageshow', function (ev) {
+      if (!ev.persisted) return;
+      var o = $('.ouverture'); if (!o) return;
+      o.removeAttribute('style'); o.classList.add('est-finie'); racine.classList.add('sans-ouverture');
+      if (avecGsap) G.set($$('.ouverture__lanieres i', o), { clearProps: 'transform' });
+    });
   });
 
   /* ---------------------------------------------------------------- */
@@ -347,7 +364,7 @@
     if (calme || !avecGsap) { if (api) api.regler(1); return; }
     var lignes = titre ? $$('.ligne', titre) : [];
     var chars = [];
-    if (window.SplitText && lignes.length) lignes.forEach(function (l) { var s = window.SplitText.create(l, { type: 'chars', mask: 'chars' }); chars = chars.concat(s.chars); });
+    if (window.SplitText && lignes.length) lignes.forEach(function (l) { var s = window.SplitText.create(l, { type: 'chars', mask: 'chars', aria: 'none' }); chars = chars.concat(s.chars); });
     var cadre = $('.heros__cadre') || $('.heros-page__decor');
     var second = $('[data-heros-second]');
     var textes = $$('.heros__texte > *, .heros-page__texte > *');
@@ -397,7 +414,7 @@
     if (calme || !avecGsap) return;
     $$('[data-revele]').forEach(function (el) {
       if (!window.SplitText) { animerOuAttendre(el, function (st) { return G.from(el, { opacity: 0, y: 30, duration: 1, ease: 'power3.out', scrollTrigger: st || undefined }); }); return; }
-      var s = window.SplitText.create(el, { type: 'lines', mask: 'lines', linesClass: 'ligne-revele' });
+      var s = window.SplitText.create(el, { type: 'lines', mask: 'lines', linesClass: 'ligne-revele', aria: 'none' });
       animerOuAttendre(el, function (st) { return G.from(s.lines, { yPercent: 105, duration: 1.15, stagger: 0.09, ease: 'expo.out', scrollTrigger: st || undefined }); });
     });
     $$('[data-salle]').forEach(function (salle, i) {
@@ -469,7 +486,8 @@
       if (calme || !avecGsap) return;
       var cible = $('a', el) || el;
       var texte = cible.textContent; cible.textContent = '';
-      cible.setAttribute('aria-label', texte);
+      if (cible.tagName === 'A') cible.setAttribute('aria-label', texte);
+      else { var sr = d.createElement('span'); sr.className = 'visuellement-cache'; sr.textContent = texte; cible.appendChild(sr); }
       var spans = [];
       texte.split(' ').forEach(function (mot, mi, mots) {
         var m = d.createElement('span'); m.style.whiteSpace = 'nowrap'; m.setAttribute('aria-hidden', 'true');
@@ -508,7 +526,10 @@
         x: function () { return -dist(); }, ease: 'none',
         scrollTrigger: { trigger: piste, start: 'top top', end: function () { return '+=' + dist(); }, pin: sec, scrub: 0.8, invalidateOnRefresh: true, anticipatePin: 1, onUpdate: function (self) { var f = self.progress * (lesSalles.length - 1); teinter(f); libererSalles(f); } }
       });
-      return function () { sec.classList.remove('est-horizontal'); horizontal = null; };
+      return function () {
+        Object.keys(attentesSalles).forEach(function (i) { attentesSalles[i].forEach(function (tl) { tl.progress(1); }); delete attentesSalles[i]; });
+        sec.classList.remove('est-horizontal'); horizontal = null;
+      };
     });
     mm.add('(max-width: 960px)', function () {
       lesSalles.forEach(function (s, i) { ST.create({ trigger: s, start: 'top 60%', end: 'bottom 40%', onToggle: function (self) { if (self.isActive) teinter(i); } }); });
@@ -631,11 +652,11 @@
     });
   }
   function curseur() {
-    if (!fin) return;
+    if (!fin || calme) return;
     var cu = $('.curseur'), lo = $('.loupe'), tr = $('.trace'); if (!cu || !lo) return;
     racine.classList.add('avec-curseur');
     var mx = -100, my = -100, cx = -100, cy = -100, cible = null, pts = [], ctx = tr ? tr.getContext('2d') : null;
-    function taille() { if (!tr) return; var r = window.devicePixelRatio || 1; tr.width = innerWidth * r; tr.height = innerHeight * r; ctx.setTransform(r, 0, 0, r, 0, 0); }
+    function taille() { if (!tr) return; var r = Math.min(window.devicePixelRatio || 1, 2); tr.width = innerWidth * r; tr.height = innerHeight * r; ctx.setTransform(r, 0, 0, r, 0, 0); }
     taille(); window.addEventListener('resize', taille);
     d.addEventListener('pointermove', function (e) {
       mx = e.clientX; my = e.clientY;
@@ -740,7 +761,7 @@
       if (n === etapes.length - 1) {
         var em = $('#email', f).value.trim();
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em)) return 'Indiquez une adresse e-mail valide, par exemple nom@domaine.fr.';
-        if (!$('#accord', f).checked) return "Cochez la case pour accepter l'utilisation de vos informations.";
+        if (!$('#accord', f).checked) return "Cochez la case pour accepter l’utilisation de vos informations.";
       }
       return '';
     }
@@ -781,7 +802,7 @@
       e.preventDefault();
       var v = $('input', f).value.trim();
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)) { msg.textContent = 'Indiquez une adresse e-mail valide, par exemple nom@domaine.fr.'; return; }
-      msg.textContent = "C'est noté pour la démonstration. Inscription simulée : aucune adresse n'est enregistrée dans cette maquette.";
+      msg.textContent = "C’est noté pour la démonstration. Inscription simulée : aucune adresse n’est enregistrée dans cette maquette.";
       f.reset(); son.tirer(0.6);
     });
   }
