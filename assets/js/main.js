@@ -247,6 +247,30 @@
     if (lenis) lenis.on('scroll', function (e) { maj(e.scroll); }); else window.addEventListener('scroll', function () { maj(window.scrollY); }, { passive: true });
     maj(window.scrollY);
     ent.addEventListener('focusin', function () { ent.classList.remove('est-cache'); });
+    /* hauteur reelle de l'en-tete, reservee en haut des sections epinglees */
+    function mesurer() { racine.style.setProperty('--entete-h', ent.offsetHeight + 'px'); }
+    mesurer();
+    if ('ResizeObserver' in window) new ResizeObserver(mesurer).observe(ent); else window.addEventListener('resize', antiRebond(mesurer, 120));
+  });
+
+  /* Barre d'action du bas (telephone) : apres le heros, jamais sur le formulaire, le pied ou le menu ouvert */
+  lancer('barreBas', function () {
+    var barre = $('[data-barre-bas]'); if (!barre) return;
+    var heros = $('.heros, .heros-page');
+    var caches = $$('#projet, .pied');
+    var etat = { heros: !!heros, caches: {} };
+    function maj() {
+      var masque = etat.heros || Object.keys(etat.caches).some(function (k) { return etat.caches[k]; });
+      barre.classList.toggle('est-visible', !masque);
+      barre.inert = masque;
+    }
+    function mesurer() { racine.style.setProperty('--barres-h', barre.offsetHeight + 'px'); }
+    mesurer();
+    if ('ResizeObserver' in window) new ResizeObserver(mesurer).observe(barre);
+    if (!('IntersectionObserver' in window)) { etat.heros = false; maj(); return; }
+    if (heros) new IntersectionObserver(function (en) { etat.heros = en[0].isIntersecting; maj(); }).observe(heros);
+    caches.forEach(function (el, i) { new IntersectionObserver(function (en) { etat.caches[i] = en[0].isIntersecting; maj(); }).observe(el); });
+    maj();
   });
   lancer('menu', function () {
     var bouton = $('.bouton-menu'), menu = $('#menu-mobile'); if (!bouton || !menu) return;
@@ -364,7 +388,7 @@
     if (calme || !avecGsap) { if (api) api.regler(1); return; }
     var lignes = titre ? $$('.ligne', titre) : [];
     var chars = [];
-    if (window.SplitText && lignes.length) lignes.forEach(function (l) { var s = window.SplitText.create(l, { type: 'chars', mask: 'chars', aria: 'none' }); chars = chars.concat(s.chars); });
+    if (window.SplitText && lignes.length) lignes.forEach(function (l) { var s = window.SplitText.create(l, { type: 'words,chars', mask: 'chars', aria: 'none' }); chars = chars.concat(s.chars); });
     var cadre = $('.heros__cadre') || $('.heros-page__decor');
     var second = $('[data-heros-second]');
     var textes = $$('.heros__texte > *, .heros-page__texte > *');
@@ -509,7 +533,7 @@
   /* ---------------------------------------------------------------- */
   function salles() {
     var sec = $('[data-salles]'); if (!sec) return;
-    var piste = $('[data-salles-piste]', sec); var lesSalles = $$('[data-salle]', sec);
+    var piste = $('[data-salles-piste]', sec); var fenetre = $('[data-salles-fenetre]', sec) || piste; var lesSalles = $$('[data-salle]', sec);
     var ivoire = [243, 237, 227];
     function hex(h) { h = h.replace('#', ''); return [parseInt(h.substr(0, 2), 16), parseInt(h.substr(2, 2), 16), parseInt(h.substr(4, 2), 16)]; }
     function melange(c, t) { return 'rgb(' + c.map(function (v, i) { return Math.round(ivoire[i] + (v - ivoire[i]) * t); }).join(',') + ')'; }
@@ -524,7 +548,7 @@
       var dist = function () { return piste.scrollWidth - window.innerWidth; };
       horizontal = G.to(piste, {
         x: function () { return -dist(); }, ease: 'none',
-        scrollTrigger: { trigger: piste, start: 'top top', end: function () { return '+=' + dist(); }, pin: sec, scrub: 0.8, invalidateOnRefresh: true, anticipatePin: 1, onUpdate: function (self) { var f = self.progress * (lesSalles.length - 1); teinter(f); libererSalles(f); } }
+        scrollTrigger: { trigger: fenetre, start: 'top top', end: function () { return '+=' + dist(); }, pin: fenetre, scrub: 0.8, invalidateOnRefresh: true, onUpdate: function (self) { var f = self.progress * (lesSalles.length - 1); teinter(f); libererSalles(f); } }
       });
       return function () {
         Object.keys(attentesSalles).forEach(function (i) { attentesSalles[i].forEach(function (tl) { tl.progress(1); }); delete attentesSalles[i]; });

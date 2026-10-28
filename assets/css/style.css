@@ -20,7 +20,7 @@
   --t-l: clamp(1.25rem, 1.05rem + 0.8vw, 1.6rem);
   --t-xl: clamp(1.9rem, 1.4rem + 2vw, 3rem);
   --t-xxl: clamp(2.6rem, 1.6rem + 4.6vw, 6rem);
-  --t-hero: clamp(3.2rem, 1.4rem + 8.2vw, 10.5rem);
+  --t-hero: clamp(3.2rem, 1.4rem + 8.2vw, 9rem);
 
   --gouttiere: max(16px, env(safe-area-inset-left, 0px));
   --gouttiere-d: max(16px, env(safe-area-inset-right, 0px));
@@ -255,10 +255,19 @@ html.sans-ouverture .ouverture { display: none; }
 .salle__compteur { font-family: var(--f-display); font-size: var(--t-l); color: var(--cognac); }
 .salles.est-horizontal .salles__piste { flex-direction: row; width: max-content; }
 .salles.est-horizontal .salle { width: 100vw; }
-.salles.est-horizontal .salle { height: 100svh; display: flex; align-items: center; padding-top: calc(env(safe-area-inset-top, 0px) + 96px); }
-.salles.est-horizontal .salle__grille { height: auto; width: 100%; }
-.salles.est-horizontal .salle__a .piece__cadre { aspect-ratio: auto; height: min(58vh, 620px); }
-.salles.est-horizontal .salle__b .piece__cadre, .salles.est-horizontal .salle__c .piece__cadre { aspect-ratio: auto; height: min(30vh, 320px); }
+/* mode horizontal : la salle tient dans l'ecran, sous l'en-tete mesure (--entete-h), les medias prennent la place restante */
+.salles.est-horizontal .salles__fenetre { height: 100svh; overflow: clip; }
+.salles.est-horizontal .salle { height: 100svh; display: flex; flex-direction: column; padding: calc(env(safe-area-inset-top, 0px) + var(--entete-h, 73px) + clamp(12px, 2.5vh, 32px)) 0 clamp(16px, 3vh, 40px); }
+.salles.est-horizontal .salle__grille { flex: 1; min-height: 0; height: auto; width: 100%; grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); align-items: stretch; row-gap: clamp(12px, 2.5vh, 24px); }
+.salles.est-horizontal .salle__texte { grid-row: 1 / -1; align-self: center; gap: 14px; }
+.salles.est-horizontal .salle__nom { font-size: clamp(2.4rem, .6rem + 3.1vw, 5.2rem); }
+.salles.est-horizontal .salle__a { grid-column: 5 / span 4; grid-row: 1 / -1; }
+.salles.est-horizontal .salle__b { grid-column: 9 / span 3; grid-row: 1; align-self: stretch; }
+.salles.est-horizontal .salle__c { grid-column: 10 / span 3; grid-row: 2; }
+.salles.est-horizontal .salle :is(.salle__a, .salle__b, .salle__c) { display: flex; flex-direction: column; min-height: 0; }
+.salles.est-horizontal .salle .piece__cadre { flex: 1; min-height: 0; aspect-ratio: auto; height: auto; }
+.salles.est-horizontal .salle .piece__cadre img { position: absolute; inset: 0; height: 100%; }
+.salles.est-horizontal .salle .cartel { flex: none; margin-top: 8px; }
 @media (max-width: 960px) {
   .salles__piste { flex-direction: column; width: 100%; }
   .salle { width: 100%; }
@@ -661,3 +670,40 @@ a.coord__valeur, a.selectionnable { color: inherit; text-decoration: none; }
 main { overflow-x: clip; }
 @media (max-width: 380px) { .bouton-menu { margin-right: 0; } .entete__barre { gap: 6px; } .marque { gap: 8px; } .entete__actions { gap: 4px; } .bouton-son { padding: .5em .6em; } }
 .pied a.selectionnable { overflow-wrap: anywhere; }
+
+/* ---------- Corrections audit (etape 2) ---------- */
+/* pastille Homo Faber : place reservee dans le titre de la plaque */
+.plaque:has(.plaque__badge) .plaque__titre { padding-right: 64px; }
+/* cibles tactiles : 44 px */
+@media (pointer: coarse) {
+  .salle__texte .lien-souligne { display: inline-flex; align-items: center; min-height: 44px; justify-self: start; background: none; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .25em; padding-bottom: 0; }
+  a.coord__valeur { display: inline-flex; align-items: center; min-height: 44px; }
+  .plaque__titre .lien-cousu, .article__titre .lien-cousu { display: inline-block; min-height: 44px; min-width: 44px; padding-block: 10px; }
+  .sommaire a { min-width: 44px; justify-content: center; }
+  .puce span { min-height: 44px; }
+  .puce input { margin: 0; }
+  input[type="range"] { height: 44px; }
+}
+/* methode epinglee sur ecran bas : seule l'etape active deplie son texte, la grille tient sous l'en-tete */
+@media (min-width: 961px) and (max-height: 800px) {
+  .methode.est-epingle .etape { padding: 10px 0 12px; }
+  .methode.est-epingle .etape h3 { font-size: clamp(1.3rem, 1rem + 1vw, 1.75rem); margin: 0 0 4px; }
+  .methode.est-epingle .etape p { max-height: 8em; overflow: hidden; transition: max-height .5s var(--ease); }
+  .methode.est-epingle .etape:not(.est-active) p { max-height: 0; }
+  .methode.est-epingle .methode__pile { max-height: calc(100svh - 90px - 7em); }
+}
+@media (min-width: 961px) and (max-height: 600px) {
+  .methode.est-epingle .etape { padding: 6px 0 8px; }
+  .methode.est-epingle .etape__num { font-size: var(--t-m); }
+}
+/* barre d'action du bas (telephone) */
+.barre-bas { display: none; }
+@media (max-width: 960px) {
+  .barre-bas { position: fixed; left: 0; right: 0; bottom: 0; z-index: 45; display: flex; align-items: center; gap: 8px; padding: 8px max(12px, env(safe-area-inset-right, 0px)) calc(8px + env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px)); background: color-mix(in srgb, var(--ivoire) 94%, transparent); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: 0 -1px 0 color-mix(in srgb, var(--lin) 70%, transparent); transform: translateY(110%); visibility: hidden; transition: transform .4s var(--ease), visibility 0s linear .4s; }
+  .barre-bas.est-visible { transform: none; visibility: visible; transition: transform .4s var(--ease), visibility 0s; }
+  .barre-bas .btn { flex: 1; justify-content: center; min-height: 44px; }
+  .barre-bas__lien { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; min-width: 44px; padding: 0 14px; border: 1px solid #8C7F6A; border-radius: 999px; font-size: var(--t-s); font-weight: 500; text-decoration: none; }
+  html.menu-ouvert .barre-bas, html:has(dialog[open]) .barre-bas { display: none; }
+  main > section:last-of-type { padding-bottom: calc(clamp(72px, 11vw, 168px) + var(--barres-h, 0px)); }
+}
+@media print { .barre-bas { display: none !important; } }
